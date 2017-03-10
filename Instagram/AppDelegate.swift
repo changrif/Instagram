@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Parse
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -16,6 +17,53 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        window = UIWindow(frame: UIScreen.main.bounds)
+        
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        
+        // Initialize Parse
+        // Set applicationId and server based on the values in the Heroku settings.
+        // clientKey is not used on Parse open source unless explicitly configured
+        Parse.initialize(
+            with: ParseClientConfiguration(block: { (configuration:ParseMutableClientConfiguration) -> Void in
+                configuration.applicationId = "Instagram"
+                configuration.clientKey = "lkajfadl;sjfakls;djfakl;sdjfa;ljf"
+                configuration.server = "https://evening-harbor-87342.herokuapp.com/parse"
+            })
+        )
+        
+        // check if user is logged in.
+        if PFUser.current() != nil {
+            // if there is a logged in user then load the home view controller
+            let homeNavigationController = storyboard.instantiateViewController(withIdentifier: "HomeViewController") as! UINavigationController
+            let homeViewController = homeNavigationController.topViewController as! HomeViewController
+            homeViewController.endpoint = "home"
+            homeNavigationController.tabBarItem.title = "Home"
+            homeNavigationController.tabBarItem.image = UIImage(named: "home")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+            
+            let captureNavigationController = storyboard.instantiateViewController(withIdentifier: "CaptureViewController") as! UINavigationController
+            let captureViewController = captureNavigationController.topViewController as! CaptureViewController
+            captureViewController.endpoint = "capture"
+            captureNavigationController.tabBarItem.title = "Capture"
+            captureNavigationController.tabBarItem.image = UIImage(named: "capture")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+            
+            let profileNavigationController = storyboard.instantiateViewController(withIdentifier: "ProfileViewController") as! UINavigationController
+            let profileViewController = profileNavigationController.topViewController as! ProfileViewController
+            profileViewController.endpoint = "profile"
+            profileNavigationController.tabBarItem.title = "Profile"
+            profileNavigationController.tabBarItem.image = UIImage(named: "profile")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+            
+            let tabBarController = UITabBarController()
+            tabBarController.viewControllers = [homeNavigationController, captureNavigationController, profileNavigationController]
+            
+            window?.rootViewController = tabBarController
+            window?.makeKeyAndVisible()
+        }   else    {
+            let vc = storyboard.instantiateInitialViewController()
+            
+            self.window?.rootViewController = vc
+        }
+        
         return true
     }
 
