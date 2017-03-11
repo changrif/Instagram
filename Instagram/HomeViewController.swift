@@ -8,10 +8,10 @@
 
 import UIKit
 import Parse
+import MBProgressHUD
 
 class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
-    //var posts: [InstaPost]!
     @IBOutlet weak var tableView: UITableView!
     var posts: [PFObject] = []
     var endpoint: String?
@@ -20,6 +20,32 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
+        
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let homeNavigationController = storyboard.instantiateViewController(withIdentifier: "HomeViewController") as! UINavigationController
+        let homeViewController = homeNavigationController.topViewController as! HomeViewController
+        homeViewController.endpoint = "home"
+        homeNavigationController.tabBarItem.title = "Home"
+        homeNavigationController.tabBarItem.image = UIImage(named: "home")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+        
+        let captureNavigationController = storyboard.instantiateViewController(withIdentifier: "CaptureViewController") as! UINavigationController
+        let captureViewController = captureNavigationController.topViewController as! CaptureViewController
+        captureViewController.endpoint = "capture"
+        captureNavigationController.tabBarItem.title = "Capture"
+        captureNavigationController.tabBarItem.image = UIImage(named: "capture")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+        
+        let profileNavigationController = storyboard.instantiateViewController(withIdentifier: "ProfileViewController") as! UINavigationController
+        let profileViewController = profileNavigationController.topViewController as! ProfileViewController
+        profileViewController.endpoint = "profile"
+        profileNavigationController.tabBarItem.title = "Profile"
+        profileNavigationController.tabBarItem.image = UIImage(named: "profile")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+        
+        let tabBarController = UITabBarController()
+        tabBarController.viewControllers = [homeNavigationController, captureNavigationController, profileNavigationController]
+        
+        window.rootViewController = tabBarController
+        window.makeKeyAndVisible()
     }
 
     override func didReceiveMemoryWarning() {
@@ -29,7 +55,12 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        refreshTimeline()
+        displayMessage(message: "Fetching Posts...")
+        delay(delay: 2, closure: {
+            self.refreshTimeline()
+        }, withCompletion: {
+            self.endHUD()
+        })
     }
     
     func refreshTimeline(){
@@ -45,9 +76,25 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let cell = tableView.dequeueReusableCell(withIdentifier: "instaCell", for: indexPath) as! InstaCell
         
         let post = self.posts[indexPath.row]
-        print("THIS IS THE POST \(post)")
+        print(post)
+        let user = post["author"] as! PFObject
         
-        cell.hideUser()
+        if let file = user["profile_pic"]   {
+            (file as AnyObject).getDataInBackground(block: { (imageData: Data?, error: Error?) in
+                if error == nil {
+                    if let imageData = imageData {
+                        let image = UIImage(data:imageData)
+                    cell.profileImageView.image = image
+                    }
+                }
+            })
+            cell.usernameLabel.text = user["username"] as! String?
+
+            cell.showUser(exists: true)
+        }   else    {
+            cell.showUser(exists: false)
+        }
+        
         cell.postLabel.text = post["caption"] as! String?
         
         let pictureFile = post["media"]
@@ -65,8 +112,9 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     @IBAction func logout(_ sender: Any) {
         PFUser.logOutInBackground { (error: Error?) in
+            let vc = self.storyboard?.instantiateViewController(withIdentifier: "LoginViewController") as! LoginViewController
+            self.present(vc, animated: true, completion: nil)
         }
-        dismiss(animated: true, completion: nil)
     }
     
     func queryPosts() {
@@ -84,6 +132,26 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
                 print(error?.localizedDescription as Any)
             }
         }
+    }
+    
+    func displayMessage(message: String?)   {
+        //Start Loading with MBProgressHUD
+        let loadingNotification = MBProgressHUD.showAdded(to: self.view, animated: true)
+        loadingNotification.mode = MBProgressHUDMode.indeterminate
+        loadingNotification.label.text = message!
+    }
+    
+    func delay(delay:Double, closure:@escaping ()->(), withCompletion completion: @escaping ()->())    {
+        let mainQueue = DispatchQueue.main
+        let deadline = DispatchTime.now() + delay
+        mainQueue.asyncAfter(deadline: deadline){
+            closure()
+            completion()
+        }
+    }
+    
+    func endHUD()   {
+        MBProgressHUD.hideAllHUDs(for: self.view, animated: true)
     }
 
     /*

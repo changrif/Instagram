@@ -60,8 +60,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             window?.makeKeyAndVisible()
         }   else    {
             let vc = storyboard.instantiateInitialViewController()
-            
-            self.window?.rootViewController = vc
+            window?.rootViewController = vc
         }
         
         return true

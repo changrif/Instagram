@@ -44,7 +44,7 @@ class LoginViewController: UIViewController {
                     self.displayMessage(message: "Signing in...")
                     self.emptyFields()
                     self.delay(delay: self.delay)   {
-                    self.performSegue(withIdentifier: "loginSegue", sender: nil)
+                    self.segueToHome()
                         self.endHUD()
                     }
                 }   else    {
@@ -73,7 +73,7 @@ class LoginViewController: UIViewController {
                     self.displayMessage(message: "Signing up...")
                     self.emptyFields()
                     self.delay(delay: self.delay)   {
-                    self.performSegue(withIdentifier: "loginSegue", sender: nil)
+                    self.segueToHome()
                         self.endHUD()
                     }
                 }   else    {
@@ -121,6 +121,34 @@ class LoginViewController: UIViewController {
         MBProgressHUD.hideAllHUDs(for: self.view, animated: true)
     }
 
+    func segueToHome()  {
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        
+        // if there is a logged in user then load the home view controller
+        let homeNavigationController = storyboard.instantiateViewController(withIdentifier: "HomeViewController") as! UINavigationController
+        let homeViewController = homeNavigationController.topViewController as! HomeViewController
+        homeViewController.endpoint = "home"
+        homeNavigationController.tabBarItem.title = "Home"
+        homeNavigationController.tabBarItem.image = UIImage(named: "home")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+        
+        let captureNavigationController = storyboard.instantiateViewController(withIdentifier: "CaptureViewController") as! UINavigationController
+        let captureViewController = captureNavigationController.topViewController as! CaptureViewController
+        captureViewController.endpoint = "capture"
+        captureNavigationController.tabBarItem.title = "Capture"
+        captureNavigationController.tabBarItem.image = UIImage(named: "capture")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+        
+        let profileNavigationController = storyboard.instantiateViewController(withIdentifier: "ProfileViewController") as! UINavigationController
+        let profileViewController = profileNavigationController.topViewController as! ProfileViewController
+        profileViewController.endpoint = "profile"
+        profileNavigationController.tabBarItem.title = "Profile"
+        profileNavigationController.tabBarItem.image = UIImage(named: "profile")?.stretchableImage(withLeftCapWidth: 30, topCapHeight: 30)
+        
+        let tabBarController = UITabBarController()
+        tabBarController.viewControllers = [homeNavigationController, captureNavigationController, profileNavigationController]
+        
+        self.present(tabBarController, animated: true, completion: nil)
+    }
 
     /*
     // MARK: - Navigation
